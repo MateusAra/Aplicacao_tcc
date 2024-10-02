@@ -3,10 +3,11 @@ import pandas as pd
 import matplotlib.pyplot as pl
 import seaborn as sb
 from sklearn.cluster import KMeans
+from Profiles import *
 
 
-def get_clusters(clusterize: bool = False):
-    if clusterize:
+def get_clusters(clustering: bool = False):
+    if clustering:
         data_frame = pd.read_excel("dataframe.v2_kmeans.xlsx", sheet_name="dataframe.v1_formated")
         
         data_frame_original = data_frame.copy()
@@ -63,21 +64,21 @@ def get_students_in_alert(clusters: list):
     alert_not_duplicated = []
 
     for line in clusters:
-        # Media de conclusão de uma tentativa está 20% acima ou abaixo da média de tempo de conclusão do quiz
+        # Media de conclusão de uma tentativa está 29% acima ou abaixo da média de tempo de conclusão do quiz
         # E a quantidade de tentativas realizadas é maior que média de tentativas
-        classe = int(line[11])
-        if (classe != 1 and classe != 0):
+        kmeans_classe = int(line[11])
+        if (kmeans_classe != 1 and kmeans_classe != 0):
             media_time = get_media_time(line[3], clusters)
-            media_time_above = (float(line[10]) * (20 / 100)) + media_time
-            media_time_below = media_time - (float(line[10]) * (20 / 100))
+            media_time_above = (float(line[10]) * (29 / 100)) + media_time
+            media_time_below = media_time - (float(line[10]) * (29 / 100))
             media_attempts = get_media_attempts(line[3], clusters)
 
             note = float(line[4])
-            attemps_realizaded = int(line[1])
+            attempts_realized = int(line[1])
             time = int(line[10])
 
             if (time >= media_time_above or time <= media_time_below) \
-            and (attemps_realizaded > media_attempts):
+            and (attempts_realized > media_attempts):
                 alerts.append(line)
     
     for line in alerts:
@@ -88,97 +89,79 @@ def get_students_in_alert(clusters: list):
 
 def get_students_in_critical_state(clusters: list):
     critical = []
-    critical_not_duplicated = []
+    profile = Profile.get_profile_critical()
     # Lista de alunos que estão na classe 1 ou 0,
-    # Media de conclusão de uma tentativa está 30% acima da média de tempo de conclusão do quiz
+    # Media de conclusão de uma tentativa está acima da média de tempo do perfil de alunos reprovados
     # E a quantidade de tentativas realizadas é maior ou igual a quantidade media de tentativas
+    # Do perfil de alunos reprovados
     for line in clusters:
-        media_time = get_media_time(line[3], clusters)
-        media_time_attempt = (float(line[10]) * (30 / 100)) + media_time
-        media_attempts = get_media_attempts(line[3], clusters)
 
         note = float(line[4])
-        classe = int(line[11])
-        attemps_realizaded = int(line[1])
+        kmeans_classe = int(line[11])
+        attempts_realized = int(line[1])
         time = int(line[10])
 
-        if (classe != 2 and classe != 3) \
-        and (time >= media_time_attempt) \
-        and (attemps_realizaded >= media_attempts) \
-        and (note < 5000.00):
+        if (kmeans_classe != 2 and kmeans_classe != 3) \
+        and (time >= profile.media_time) \
+        and (attempts_realized >= profile.media_attempts) \
+        and (note < 7000.00):
             critical.append(line)
-    
-    for line in critical:
-        if line not in critical:
-            critical_not_duplicated.append(line)
 
-    return critical_not_duplicated
+    return critical
 
 def get_students_in_good_state(clusters: list):
     good = []
-    good_not_duplicated = []
+    profile = Profile.get_profile_good()
     # Lista de alunos que estão na classe 2 ou 3,
     # Media de conclusão de uma tentativa está abaixo da média de tempo de conclusão do quiz
     # E a quantidade de tentativas realizadas é menor a quantidade media de tentativas
     for line in clusters:
-        media_time = get_media_time(line[3], clusters)
-        media_attempts = get_media_attempts(line[3], clusters)
-
+        
         note = float(line[4])
         classe = int(line[11])
-        attemps_realizaded = int(line[1])
+        attempts_realized = int(line[1])
         time = int(line[10])
  
         if (classe != 1 and classe != 0) \
-        and (attemps_realizaded < media_attempts) \
-        and (time < media_time) and (note >= 9000.00):
+        and (attempts_realized < profile.media_attempts) \
+        and (time < profile.media_time) \
+        and (note >= 9000.00):
             good.append(line)
 
-    for line in good:
-        if line not in good_not_duplicated:
-            good_not_duplicated.append(line)
-
-    return good_not_duplicated
+    return good
 
 def get_students_in_regular_state(clusters: list):
     regular = []
-    regular_not_duplicated = []
+    profile = Profile.get_profile_regular()
     # Lista de alunos que estão na classe 2 ou 3,
-    # Media de conclusão de uma tentativa está menor ou igual da média de tempo de conclusão do quiz
-    # E a quantidade de tentativas realizadas é menor ou igual a quantidade media de tentativas
+    # Media de conclusão de uma tentativa está menor ou igual da média de tempo de conclusão do 
+    # perfil de alunos regulares
+    # E a quantidade de tentativas realizadas é menor ou igual a quantidade media de tentativas do 
+    # perfil de alunos regulares
     for line in clusters:
-        media_time = get_media_time(line[3], clusters)
-        media_attempts = get_media_attempts(line[3], clusters)
 
         note = float(line[4])
         classe = int(line[11])
-        attemps_realizaded = int(line[1])
+        attempts_realized = int(line[1])
         time = int(line[10])
 
         if (classe != 1 and classe != 0 \
-        and (attemps_realizaded <= media_attempts) \
-        and (time <= media_time) 
+        and (attempts_realized <= profile.media_attempts) \
+        and (time <= profile.media_time) 
         and (note >= 7000.00 and note <= 8900.00)):
             regular.append(line)
     
-    for line in regular:
-        if line not in regular_not_duplicated:
-            regular_not_duplicated.append(line)
-    
-    return regular_not_duplicated
+    return regular
 
 if __name__ == "__main__":
 
-    clusters = get_clusters(clusterize=False)
+    clusters = get_clusters(clustering=False)
 
     alert = get_students_in_alert(clusters)
     critical = get_students_in_critical_state(clusters)
     good = get_students_in_good_state(clusters)
     regular = get_students_in_regular_state(clusters)
     
-
-    print("\nAlunos em alerta:")
-
     df_alert = pd.DataFrame({
         "Nome_do_usuario": [line[5] for line in alert],
         "Nome_da_atividade": [line[0] for line in alert],
