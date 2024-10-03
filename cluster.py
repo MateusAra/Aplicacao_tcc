@@ -31,61 +31,25 @@ def get_clusters(clustering: bool = False):
         data_frame = data_frame.dropna()
         return data_frame.values.tolist()
 
-def get_media_time(quiz: int, clusters: list):
-    count = 0
-    quiz_time = 0
-
-    for line in clusters:
-        if int(line[3]) == quiz:
-            count += 1
-            quiz_time += line[10]
-
-    if count == 0:
-        count = 1
-
-    return int(quiz_time) / int(count)
-
-def get_media_attempts(quiz: int, clusters: list):
-    count = 0
-    attempts = 0
-
-    for line in clusters:
-        if int(line[3]) == quiz:
-            count += 1
-            attempts += line[1]
-
-    if count == 0:
-        count = 1
-
-    return int(attempts) / int(count)
-
 def get_students_in_alert(clusters: list):
     alerts = []
-    alert_not_duplicated = []
-
+    profile = Profile.get_profile_critical()
+    percentage_of_failed_students = 29
     for line in clusters:
-        # Media de conclusão de uma tentativa está 29% acima ou abaixo da média de tempo de conclusão do quiz
-        # E a quantidade de tentativas realizadas é maior que média de tentativas
+        # Media de conclusão de uma tentativa está 29% acima ou abaixo da média de tempo do perfil de alunos reprovados
+        # E a quantidade de tentativas realizadas é maior que média de tentativas do perfil de alunos reprovados
         kmeans_classe = int(line[11])
-        if (kmeans_classe != 1 and kmeans_classe != 0):
-            media_time = get_media_time(line[3], clusters)
-            media_time_above = (float(line[10]) * (29 / 100)) + media_time
-            media_time_below = media_time - (float(line[10]) * (29 / 100))
-            media_attempts = get_media_attempts(line[3], clusters)
-
-            note = float(line[4])
+        if (kmeans_classe != 1 and kmeans_classe != 0): 
+            media_time_above = (float(line[10]) * (percentage_of_failed_students / 100)) + profile.media_time
+            media_time_below = profile.media_time - (float(line[10]) * (percentage_of_failed_students / 100))
             attempts_realized = int(line[1])
             time = int(line[10])
 
             if (time >= media_time_above or time <= media_time_below) \
-            and (attempts_realized > media_attempts):
+            and (attempts_realized > profile.media_attempts):
                 alerts.append(line)
-    
-    for line in alerts:
-        if line not in alert_not_duplicated:
-            alert_not_duplicated.append(line)
             
-    return alert_not_duplicated
+    return alerts
 
 def get_students_in_critical_state(clusters: list):
     critical = []
@@ -96,7 +60,7 @@ def get_students_in_critical_state(clusters: list):
     # Do perfil de alunos reprovados
     for line in clusters:
 
-        note = float(line[4])
+        grade = float(line[4])
         kmeans_classe = int(line[11])
         attempts_realized = int(line[1])
         time = int(line[10])
@@ -104,7 +68,7 @@ def get_students_in_critical_state(clusters: list):
         if (kmeans_classe != 2 and kmeans_classe != 3) \
         and (time >= profile.media_time) \
         and (attempts_realized >= profile.media_attempts) \
-        and (note < 7000.00):
+        and (grade < profile.media_grade):
             critical.append(line)
 
     return critical
@@ -125,14 +89,15 @@ def get_students_in_good_state(clusters: list):
         if (classe != 1 and classe != 0) \
         and (attempts_realized < profile.media_attempts) \
         and (time < profile.media_time) \
-        and (note >= 9000.00):
+        and (note >= profile.media_grade):
             good.append(line)
 
     return good
 
 def get_students_in_regular_state(clusters: list):
     regular = []
-    profile = Profile.get_profile_regular()
+    profile_regular = Profile.get_profile_regular()
+    profile_good = Profile.get_profile_good()
     # Lista de alunos que estão na classe 2 ou 3,
     # Media de conclusão de uma tentativa está menor ou igual da média de tempo de conclusão do 
     # perfil de alunos regulares
@@ -146,9 +111,9 @@ def get_students_in_regular_state(clusters: list):
         time = int(line[10])
 
         if (classe != 1 and classe != 0 \
-        and (attempts_realized <= profile.media_attempts) \
-        and (time <= profile.media_time) 
-        and (note >= 7000.00 and note <= 8900.00)):
+        and (attempts_realized <= profile_regular.media_attempts) \
+        and (time <= profile_regular.media_time) 
+        and (note >= profile_regular.media_grade and note <= profile_good.media_grade)):
             regular.append(line)
     
     return regular
