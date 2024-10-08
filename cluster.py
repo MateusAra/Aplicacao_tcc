@@ -34,7 +34,7 @@ def get_clusters(clustering: bool = False):
 def get_students_in_alert(clusters: list):
     alerts = []
     profile = Profile.get_profile_critical()
-    percentage_of_failed_students = 29
+    percentage_of_failed_students = 8.25
     for line in clusters:
         # Media de conclusão de uma tentativa está 29% acima ou abaixo da média de tempo do perfil de alunos reprovados
         # E a quantidade de tentativas realizadas é maior que média de tentativas do perfil de alunos reprovados
@@ -46,7 +46,7 @@ def get_students_in_alert(clusters: list):
             time = int(line[10])
 
             if (time >= media_time_above or time <= media_time_below) \
-            and (attempts_realized > profile.media_attempts):
+            and (attempts_realized >= profile.media_attempts):
                 alerts.append(line)
             
     return alerts
@@ -68,7 +68,7 @@ def get_students_in_critical_state(clusters: list):
         if (kmeans_classe != 2 and kmeans_classe != 3) \
         and (time >= profile.media_time) \
         and (attempts_realized >= profile.media_attempts) \
-        and (grade < profile.media_grade):
+        and (grade <= profile.media_grade):
             critical.append(line)
 
     return critical
@@ -81,7 +81,7 @@ def get_students_in_good_state(clusters: list):
     # E a quantidade de tentativas realizadas é menor a quantidade media de tentativas
     for line in clusters:
         
-        note = float(line[4])
+        grade = float(line[4])
         classe = int(line[11])
         attempts_realized = int(line[1])
         time = int(line[10])
@@ -89,7 +89,7 @@ def get_students_in_good_state(clusters: list):
         if (classe != 1 and classe != 0) \
         and (attempts_realized < profile.media_attempts) \
         and (time < profile.media_time) \
-        and (note >= profile.media_grade):
+        and (grade >= profile.media_grade):
             good.append(line)
 
     return good
@@ -105,15 +105,15 @@ def get_students_in_regular_state(clusters: list):
     # perfil de alunos regulares
     for line in clusters:
 
-        note = float(line[4])
+        grade = float(line[4])
         classe = int(line[11])
         attempts_realized = int(line[1])
         time = int(line[10])
 
         if (classe != 1 and classe != 0 \
         and (attempts_realized <= profile_regular.media_attempts) \
-        and (time <= profile_regular.media_time) 
-        and (note >= profile_regular.media_grade and note <= profile_good.media_grade)):
+        and (time <= profile_regular.media_time) \
+        and (grade > profile_regular.media_grade and grade < profile_good.media_grade)):
             regular.append(line)
     
     return regular
@@ -129,6 +129,7 @@ if __name__ == "__main__":
     
     df_alert = pd.DataFrame({
         "Nome_do_usuario": [line[5] for line in alert],
+        "Identificador_do_usuario": [line[6] for line in alert],
         "Nome_da_atividade": [line[0] for line in alert],
         "Email": [line[12] for line in alert],
         "Nota": [line[4] for line in alert],
@@ -141,6 +142,7 @@ if __name__ == "__main__":
 
     df_critical = pd.DataFrame({
         "Nome_do_usuario": [line[5] for line in critical],
+        "Identificador_do_usuario": [line[6] for line in critical],
         "Nome_da_atividade": [line[0] for line in critical],
         "Email": [line[12] for line in critical],
         "Nota": [line[4] for line in critical],
@@ -153,6 +155,7 @@ if __name__ == "__main__":
 
     df_good = pd.DataFrame({
         "Nome_do_usuario": [line[5] for line in good],
+        "Identificador_do_usuario": [line[6] for line in good],
         "Nome_da_atividade": [line[0] for line in good],
         "Email": [line[12] for line in good],
         "Nota": [line[4] for line in good],
@@ -165,6 +168,7 @@ if __name__ == "__main__":
 
     df_regular = pd.DataFrame({
         "Nome_do_usuario": [line[5] for line in regular],
+        "Identificador_do_usuario": [line[6] for line in regular],
         "Nome_da_atividade": [line[0] for line in regular],
         "Email": [line[12] for line in regular],
         "Nota": [line[4] for line in regular],

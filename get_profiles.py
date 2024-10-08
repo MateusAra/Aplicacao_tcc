@@ -5,7 +5,7 @@ import seaborn as sb
 from Profiles import *
 
 def get_grades():
-    data_frame = pd.read_csv("profiles.csv", dtype={'finalgrade': 'float', 'userid': 'int'})
+    data_frame = pd.read_csv("profiles_updated.csv", dtype={'finalgrade': 'float', 'userid': 'int', 'username': 'str'})
     data_frame = data_frame.dropna()
     return data_frame.values.tolist()  
 
@@ -19,8 +19,8 @@ def get_users_disapprove():
     clusters = get_grades()
 
     for line in clusters:
-        if (float(line[0]) < 7.0 and line[0] != None):
-            userList.append(line[1])
+        if (float(line[0]) <= 5.0 and line[0] != None):
+            userList.append(line[2])
 
     return userList
 
@@ -29,8 +29,8 @@ def get_users_regular():
     clusters = get_grades()
 
     for line in clusters:
-        if ((float(line[0]) >= 7.0 and float(line[0]) <= 8.9) and line[0] != None):
-            userList.append(line[1])
+        if ((float(line[0]) >= 5.1 and float(line[0]) <= 7.0) and line[0] != None):
+            userList.append(line[2])
 
     return userList
 
@@ -39,8 +39,8 @@ def get_users_good():
     clusters = get_grades()
 
     for line in clusters:
-        if (float(line[0]) >= 9.0 and line[0] != None):
-            userList.append(line[1])
+        if (float(line[0]) >= 7.1 and line[0] != None):
+            userList.append(line[2])    
 
     return userList
 
@@ -53,7 +53,7 @@ def get_profile_critical(clusters: list) -> Profile:
     media_attempts = 0
 
     for line in clusters:
-        if (float(line[6]) in userList):
+        if (str(line[5]) in userList):
             count += 1
             media_grade += float(line[4])
             media_time += int(line[10])
@@ -63,7 +63,9 @@ def get_profile_critical(clusters: list) -> Profile:
     media_time_final = media_time / count
     media_attempts_final = media_attempts / count
 
-    return Profile(media_grade_final, media_time_final, media_attempts_final)
+    print(f"Media_grade: {media_grade_final}")
+    print(f"Media_time: {media_time_final}")
+    print(f"Media_attempts: {media_attempts_final}")
 
 def get_profile_regular(clusters: list) -> Profile:
     userList = get_users_regular()
@@ -74,7 +76,7 @@ def get_profile_regular(clusters: list) -> Profile:
     media_attempts = 0
 
     for line in clusters:
-        if (float(line[6]) in userList):
+        if (str(line[5]) in userList):
             count += 1
             media_grade += float(line[4])
             media_time += int(line[10])
@@ -97,7 +99,7 @@ def get_profile_good(clusters: list) -> Profile:
     media_attempts = 0
 
     for line in clusters:
-        if (float(line[6]) in userList):
+        if (str(line[5]) in userList):
             count += 1
             media_grade += float(line[4])
             media_time += int(line[10])
@@ -113,6 +115,13 @@ def get_profile_good(clusters: list) -> Profile:
 
 
 if __name__ == "__main__":
-    clusters = get_clusters()
-    get_profile_good(clusters=clusters)
+    # clusters = get_clusters()
+    # get_profile_good(clusters)
+    # get_profile_regular(clusters)
+    # get_profile_critical(clusters)
+    print(get_users_disapprove())
+    print('\n')
+    print(get_users_good())
+    print('\n')
+    print(get_users_regular())
 
