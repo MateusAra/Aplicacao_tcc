@@ -6,8 +6,9 @@ from sklearn.cluster import KMeans
 from Profiles import *
 
 def verify_student_in_list(username: str, student_list: list):
+    username = username.strip().lower()
     for line in student_list:
-        if line[0] == username:
+        if line[0].strip().lower() == username:
             return True
     return False
 
@@ -59,9 +60,12 @@ def get_students_in_alert(clusters: list):
                 quiz = line[0]
                 section = line[9]
                 type_quiz = line[8]
-                student = [name, email, grade, quiz, section, type_quiz, "Alert"]
+                time = line[10]
+                student = [name, email, grade, quiz, section, type_quiz, time, "Alert"]
+                
+                already_in_alerts = verify_student_in_list(name, alerts)
 
-                if student not in alerts:
+                if not already_in_alerts:
                     alerts.append(student)
             
     return alerts
@@ -90,14 +94,17 @@ def get_students_in_critical_state(clusters: list):
             quiz = line[0]
             section = line[9]
             type_quiz = line[8]
-            student = [name, email, grade, quiz, section, type_quiz, "Critical"]
+            time = line[10]
+            student = [name, email, grade, quiz, section, type_quiz, time, "Critical"]
+            
+            already_in_critical = verify_student_in_list(name, critical)
 
-            if student not in critical:
+            if not already_in_critical:
                 critical.append(student)
 
     return critical
 
-def get_students_in_good_state(clusters: list, critical: list):
+def get_students_in_good_state(clusters: list, critical: list, regular: list):
     good = []
     profile = Profile.get_profile_good()
     # Lista de alunos que estão na classe 2 ou 3,
@@ -120,19 +127,23 @@ def get_students_in_good_state(clusters: list, critical: list):
             quiz = line[0]
             section = line[9]
             type_quiz = line[8]
-            student = [name, email, grade, quiz, section, type_quiz, "Good"]
+            time = line[10]
+            student = [name, email, grade, quiz, section, type_quiz, time, "Good"]
 
             is_critical = verify_student_in_list(name, critical)
+            is_regular = verify_student_in_list(name, regular)
+            already_in_good = verify_student_in_list(name, good)
 
-            if (student not in good and not is_critical):
+            if (not already_in_good and not is_critical and not is_regular):
                 good.append(student)
 
     return good
 
-def get_students_in_regular_state(clusters: list, critical: list, good: list):
+def get_students_in_regular_state(clusters: list, critical: list):
     regular = []
     profile_regular = Profile.get_profile_regular()
     profile_good = Profile.get_profile_good()
+    profile_critical = Profile.get_profile_critical()
     # Lista de alunos que estão na classe 2 ou 3,
     # Media de conclusão de uma tentativa está menor ou igual da média de tempo de conclusão do 
     # perfil de alunos regulares
@@ -148,19 +159,20 @@ def get_students_in_regular_state(clusters: list, critical: list, good: list):
         if (classe != 1 and classe != 0 \
         and (attempts_realized <= profile_regular.media_attempts) \
         and (time <= profile_regular.media_time) \
-        and (grade > profile_regular.media_grade and grade < profile_good.media_grade)):
+        and (profile_critical.media_grade < grade < profile_good.media_grade)):
             name = line[5]
             email = line[12]
             grade = line[4]
             quiz = line[0]
             section = line[9]
             type_quiz = line[8]
-            student = [name, email, grade, quiz, section, type_quiz, "Regular"]
+            time = line[10]
+            student = [name, email, grade, quiz, section, type_quiz, time, "Regular"]
             
             is_critical = verify_student_in_list(name, critical)
-            is_good = verify_student_in_list(name, good)
+            already_in_regular = verify_student_in_list(name, regular)
 
-            if (student not in regular and not is_critical and not is_good):
+            if (not already_in_regular and not is_critical):
                 regular.append(student)
     
     return regular
@@ -172,8 +184,8 @@ if __name__ == "__main__":
 
     alert = get_students_in_alert(clusters)
     critical = get_students_in_critical_state(clusters)
-    good = get_students_in_good_state(clusters, critical)
-    regular = get_students_in_regular_state(clusters, critical, good)
+    regular = get_students_in_regular_state(clusters, critical)
+    good = get_students_in_good_state(clusters, critical, regular)
     
     general.extend(alert)
     general.extend(critical)
@@ -187,11 +199,15 @@ if __name__ == "__main__":
         "Nome_da_atividade": [line[3] for line in general],
         "Secao": [line[4] for line in general],
         "Tipo_de_atividade": [line[5] for line in general],
-        "Categoria": [line[6] for line in general]
+        "Tempo": [line[6] for line in general],
+        "Categoria": [line[7] for line in general]
     })
 
-    sb.pairplot(df_general, 
-                hue="Categoria", 
-                palette=["m", "y", "g"]).savefig("Categorias.png")
+    pl.figure(figsize=(8, 6))
+    sb.scatterplot(x='Nota', y='Tempo', data=df_general, hue='Categoria')
 
-    print("\nProcesso finalizado com sucesso!")
+    pl.title('Relação entre Nota e Tempo', fontsize=16)
+    pl.xlabel('Nota', fontsize=12)
+    pl.ylabel('Tempo (segundos)', fontsize=12)
+
+    pl.show()
