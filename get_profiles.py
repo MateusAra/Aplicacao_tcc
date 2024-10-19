@@ -119,9 +119,20 @@ if __name__ == "__main__":
     # get_profile_good(clusters)
     # get_profile_regular(clusters)
     # get_profile_critical(clusters)
-    print(get_users_disapprove())
-    print('\n')
-    print(get_users_good())
-    print('\n')
-    print(get_users_regular())
+
+    data = {
+        'Categorias': ['Disapprove', 'Regular', 'Good'],
+        'Quantidade': [len(get_users_disapprove()), len(get_users_regular()), len(get_users_good())]
+    }
+
+    df = pd.DataFrame(data)
+
+    pl.figure(figsize=(8, 6))
+    sb.barplot(x='Categorias', y='Quantidade', data=df, palette='pastel')
+
+    pl.title('Gráfico de Colunas', fontsize=16)
+    pl.xlabel('Categorias', fontsize=12)
+    pl.ylabel('Quantidade', fontsize=12)
+
+    pl.show()
 
