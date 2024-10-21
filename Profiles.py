@@ -5,16 +5,16 @@ class Profile:
         self.media_attempts = media_attempts
 
     def get_profile_critical():
-        return Profile(media_grade=4248.285818181818, 
-                       media_time=583.0181818181818, 
-                       media_attempts=1.2181818181818183)
+        return Profile(media_grade=4581.484705882353, 
+                       media_time=628.7450980392157, 
+                       media_attempts=1.2352941176470589)
     
     def get_profile_regular():
-        return Profile(media_grade=5232.494671120401, 
-                       media_time=516.371237458194, 
-                       media_attempts=2.737458193979933)
+        return Profile(media_grade=5330.5482339523, 
+                       media_time=526.0477001703578, 
+                       media_attempts=2.7325383304940374)
     
     def get_profile_good():
-        return Profile(media_grade=6549.906853818914, 
-                       media_time=510.38442083965606, 
-                       media_attempts=2.894284269094588)
+        return Profile(media_grade=6484.077394366193, 
+                       media_time=514.5962441314554, 
+                       media_attempts=3.1004694835680753)
