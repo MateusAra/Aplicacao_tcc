@@ -5,6 +5,7 @@ import seaborn as sb
 from sklearn.cluster import KMeans
 from Profiles import *
 from collections import defaultdict
+import plotly.express as px
 
 
 final_good = ['anon3', 'anon5', 'anon6', 'anon7', 'anon12', 'anon13', 'anon15', 'anon18', 'anon26', 'anon27', 'anon28', 'anon29', 'anon30', 'anon31', 'anon33', 'anon34', 'anon35', 'anon36', 'anon39', 'anon40', 'anon41', 'anon42', 'anon43', 'anon44', 'anon46', 'anon47', 'anon48', 'anon49', 'anon51', 'anon52', 'anon53', 'anon54', 'anon55', 'anon57', 'anon58', 'anon59', 'anon60', 'anon61', 'anon62', 'anon63', 'anon64', 'anon65', 'anon66', 'anon67', 'anon68', 'anon69', 'anon70', 'anon71', 'anon72', 'anon73', 'anon74', 'anon75', 'anon76', 'anon77', 'anon78', 'anon82', 'anon83', 'anon84', 'anon85', 'anon86', 'anon87', 'anon89', 'anon91', 'anon92', 'anon93', 'anon94', 'anon96', 'anon98']
@@ -127,6 +128,13 @@ def verify_student_in_list(student_name: str, student_list: list) -> bool:
 
     return any(student_name == student.strip().lower() for student in student_list)
 
+def verify_student_is_outlier(username: str, student_list: list):
+    username = username.strip().lower()
+    for line in student_list:
+        if line[0].strip().lower() == username:
+            return True
+    return False
+
 def categorize_outliers(student_averages, good, regular, alert, critical):
     outliers = []
     
@@ -141,29 +149,68 @@ def categorize_outliers(student_averages, good, regular, alert, critical):
     return outliers
 
 if __name__ == "__main__":
+    all_students = []
+
     clusters = get_clusters(clustering=False)
-
     student_attempts = group_attempts_by_student(clusters)
-
     student_averages = calculate_student_averages(student_attempts)
 
     good, regular, alert, critical = categorize_students(student_averages)
     outliers = categorize_outliers(student_averages, good, regular, alert, critical)
 
-    total_hits = 0
-
     for student in good:
-        if verify_student_in_list(student[0], final_good):
-            total_hits += 1
+        if not verify_student_is_outlier(student[0], outliers):
+            all_students.append(student)
 
     for student in regular:
-        if verify_student_in_list(student[0], final_regular):
-            total_hits += 1
+        if not verify_student_is_outlier(student[0], outliers):
+            all_students.append(student)
 
     for student in critical:
-        if verify_student_in_list(student[0], final_critical):
-            total_hits += 1
+        if not verify_student_is_outlier(student[0], outliers):
+            all_students.append(student)
 
-    total = len(good) + len(regular) + len(critical)
+    for student in alert:
+        if not verify_student_is_outlier(student[0], outliers):
+            all_students.append(student)
 
-    print(f"Total de { total_hits / (total - len(outliers)) * 100 }% de acertos")
+    df_all = pd.DataFrame({
+        "Nome_do_usuario": [line[0] for line in all_students],
+        "Nota": [line[1] for line in all_students],
+        "Tempo": [line[2] for line in all_students],
+        "Tentativas": [line[3] for line in all_students],
+        "Categoria": [line[4] for line in all_students]
+    })
+
+    palette = {
+        'Good': 'green',
+        'Regular': 'blue',
+        'Alert': 'orange',
+        'Critical': 'red' 
+    }
+
+    pl.figure(figsize=(8, 6))
+    sb.scatterplot(x='Nota', y='Tempo', data=df_all, palette=palette, hue='Categoria')
+
+    pl.title('Relação entre Nota e Tempo', fontsize=16)
+    pl.xlabel('Nota', fontsize=12)
+    pl.ylabel('Tempo (segundos)', fontsize=12)
+
+    pl.savefig("Nota x Tempo.png")
+    pl.show()
+
+    pl.figure(figsize=(8, 6))
+    sb.scatterplot(x='Nota', y='Tentativas', data=df_all, palette=palette, hue='Categoria')
+
+    pl.title('Relação entre Nota e Tentativas', fontsize=16)
+    pl.xlabel('Nota', fontsize=12)
+    pl.ylabel('Tentativas', fontsize=12)
+
+    pl.savefig("Nota x Tentativas.png")
+    pl.show()
+
+    sb.pairplot(df_all, hue='Categoria', palette=palette).savefig("Categorias_Geral.png")
+    pl.show()
+
+
+
