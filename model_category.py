@@ -189,28 +189,44 @@ if __name__ == "__main__":
         'Critical': 'red' 
     }
 
-    pl.figure(figsize=(8, 6))
-    sb.scatterplot(x='Nota', y='Tempo', data=df_all, palette=palette, hue='Categoria')
 
-    pl.title('Relação entre Nota e Tempo', fontsize=16)
-    pl.xlabel('Nota', fontsize=12)
-    pl.ylabel('Tempo (segundos)', fontsize=12)
-
-    pl.savefig("Nota x Tempo.png")
-    pl.show()
-
+    #Relaciona as notas dos alunos com a quantidade de tentativas realizadas, separado por categoria.
     pl.figure(figsize=(8, 6))
     sb.scatterplot(x='Nota', y='Tentativas', data=df_all, palette=palette, hue='Categoria')
 
-    pl.title('Relação entre Nota e Tentativas', fontsize=16)
+    pl.title('Relação entre Nota vs Tentativas', fontsize=16)
     pl.xlabel('Nota', fontsize=12)
     pl.ylabel('Tentativas', fontsize=12)
 
     pl.savefig("Nota x Tentativas.png")
     pl.show()
 
+    #Tentativas Realizadas versus Tempo Gasto, novamente separado por categoria. 
+    #Isso revela como o número de tentativas influencia o tempo gasto e se
+    #há padrões distintos entre as categorias
+    pl.figure(figsize=(8, 6))
+    sb.scatterplot(x='Tentativas', y='Tempo', data=df_all, palette=palette, hue='Categoria')
+
+    pl.title('Relação entre Tentativas vs Tempo', fontsize=16)
+    pl.xlabel('Nota', fontsize=12)
+    pl.ylabel('Tentativas', fontsize=12)
+
+    pl.savefig("Tentativas x Tempo.png")
+    pl.show()
+
+    #Visão geral do desempenho dos alunos, destacando as áreas com mais estudantes.
     sb.pairplot(df_all, hue='Categoria', palette=palette).savefig("Categorias_Geral.png")
     pl.show()
 
+    #Relaciona as notas dos alunos com o tempo gasto nas atividades, separado por categoria. 
+    #Isso ajuda a entender como a quantidade de tempo investido influencia o 
+    #desempenho dos alunos em diferentes categorias.
+    pl.figure(figsize=(8, 6))
+    sb.scatterplot(x='Nota', y='Tempo', data=df_all, palette=palette, hue='Categoria')
 
+    pl.title('Relação entre Nota vs Tempo', fontsize=16)
+    pl.xlabel('Nota', fontsize=12)
+    pl.ylabel('Tempo (segundos)', fontsize=12)
 
+    pl.savefig("Nota x Tempo.png")
+    pl.show()
