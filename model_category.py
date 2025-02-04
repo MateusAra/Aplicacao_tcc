@@ -7,11 +7,6 @@ from Profiles import *
 from collections import defaultdict
 import plotly.express as px
 
-
-final_good = ['anon3', 'anon5', 'anon6', 'anon7', 'anon12', 'anon15', 'anon18', 'anon26', 'anon27', 'anon28', 'anon29', 'anon30', 'anon31', 'anon33', 'anon34', 'anon35', 'anon39', 'anon40', 'anon41', 'anon42', 'anon43', 'anon44', 'anon46', 'anon47', 'anon48', 'anon49', 'anon51', 'anon52', 'anon53', 'anon54', 'anon55', 'anon57', 'anon58', 'anon59', 'anon60', 'anon61', 'anon62', 'anon63', 'anon64', 'anon65', 'anon66', 'anon68', 'anon69', 'anon70', 'anon72', 'anon73', 'anon74', 'anon75', 'anon76', 'anon78', 'anon82', 'anon83', 'anon84', 'anon85', 'anon91', 'anon92', 'anon93', 'anon94', 'anon96', 'anon98']
-final_regular = ['anon4', 'anon9', 'anon10', 'anon14', 'anon16', 'anon17', 'anon19', 'anon20', 'anon21', 'anon22', 'anon23', 'anon25', 'anon45', 'anon50', 'anon80', 'anon88', 'anon90', 'anon97']
-final_critical = ['anon8', 'anon11', 'anon24', 'anon81', 'anon95', 'anon99', 'anon100']
-
 def get_clusters(clustering: bool = False):
 
     if clustering:
@@ -63,47 +58,65 @@ def calculate_student_averages(student_attempts):
 
         attempts_by_activity = {}
         for attempt in attempts:
-            activity = attempt[0] 
+            activity = attempt[0]
+            activity_type = attempt[8] 
             if activity not in attempts_by_activity:
-                attempts_by_activity[activity] = []
-            attempts_by_activity[activity].append(attempt)
+                attempts_by_activity[activity] = {
+                    'type': activity_type,
+                    'attempts': []
+                }
+            attempts_by_activity[activity]['attempts'].append(attempt)
 
         activity_averages = {}
 
-        total_grade_all_activities = 0
-        total_time_all_activities = 0
-        total_attempts_all_activities = 0
+        total_weighted_grade = 0
+        total_weighted_time = 0
+        total_weighted_attempts = 0
         total_activities = 0
 
-        for activity, activity_attempts in attempts_by_activity.items():
+        for activity, activity_data in attempts_by_activity.items():
+            activity_attempts = activity_data['attempts']
+            activity_type = activity_data['type']
+            importance = activity_type + 1
+
             sorted_attempts = sorted(activity_attempts, key=lambda x: float(x[4]), reverse=True)
-            best_attempts = sorted_attempts
+            best_attempts = []
+
+            for attempt in sorted_attempts:
+                if ((float(attempt[4]) >= 1000.00) and (int(attempt[1]) <= 4) and (int(attempt[10]) <= 1800)):
+                    best_attempts.append(attempt)
 
             total_grade = sum(float(attempt[4]) for attempt in best_attempts)
             total_time = sum(int(attempt[10]) for attempt in best_attempts)
             total_attempts = sum(int(attempt[1]) for attempt in best_attempts)
 
-            num_best_attempts = len(best_attempts)
+            num_best_attempts = len(best_attempts) if best_attempts else 1
+
             average_grade = total_grade / num_best_attempts
             average_time = total_time / num_best_attempts
             average_attempts = total_attempts / num_best_attempts
 
-            total_grade_all_activities += average_grade
-            total_time_all_activities += average_time
-            total_attempts_all_activities += average_attempts
+            weighted_grade = average_grade * importance
+            weighted_time = average_time * importance
+            weighted_attempts = average_attempts * importance
+
+            total_weighted_grade += weighted_grade
+            total_weighted_time += weighted_time
+            total_weighted_attempts += weighted_attempts
             total_activities += 1
 
             activity_averages[activity] = {
                 'average_grade': average_grade,
                 'average_time': average_time,
                 'average_attempts': average_attempts,
+                'importance': importance,
                 'best_attempts': best_attempts
             }
 
         if total_activities > 0:
-            general_average_grade = total_grade_all_activities / total_activities
-            general_average_time = total_time_all_activities / total_activities
-            general_average_attempts = total_attempts_all_activities / total_activities
+            general_average_grade = total_weighted_grade / total_activities
+            general_average_time = total_weighted_time / total_activities
+            general_average_attempts = total_weighted_attempts / total_activities
         else:
             general_average_grade = general_average_time = general_average_attempts = 0
 
@@ -132,7 +145,7 @@ def categorize_students(student_averages):
         avg_time = averages['average_time']
         avg_attempts = averages['average_attempts']
 
-        if avg_grade < 1 or avg_attempts > 4 or avg_time > 1200:
+        if avg_grade <= 1000.00 or avg_attempts >= 4 or avg_time >= 1800:
             continue
 
         if avg_grade >= profile_good.media_grade \
@@ -247,9 +260,9 @@ if __name__ == "__main__":
     sb.pairplot(df_contents, hue='Secao', palette=palette).savefig("Conteudos.png")
     pl.show()
 
-    # Relaciona as notas dos alunos com o tempo gasto nas atividades, separado por categoria. 
-    # Isso ajuda a entender como a quantidade de tempo investido influencia o 
-    # desempenho dos alunos em diferentes categorias.
+    #Relaciona as notas dos alunos com o tempo gasto nas atividades, separado por categoria. 
+    #Isso ajuda a entender como a quantidade de tempo investido influencia o 
+    #desempenho dos alunos em diferentes categorias.
     pl.figure(figsize=(8, 6))
     sb.scatterplot(x='Nota', y='Tempo', data=df_all, palette=palette, hue='Categoria')
 
@@ -260,28 +273,5 @@ if __name__ == "__main__":
     pl.savefig("Nota x Tempo.png")
     pl.show()
 
-    print(f"Alunos Bom: {len(good)}")
-    print(f"Alunos Critico: {len(critical)}")
-    print(f"Alunos Regular: {len(regular)}")
-    print(f"Alunos Alert: {len(alert)}")
-
-    total_hits = 0
-    total = len(final_good) + len(final_regular) + len(final_critical)
-
-    for student in good:
-        if verify_student_in_list(student[0], final_good):
-            total_hits += 1
-
-    for student in regular:
-        if verify_student_in_list(student[0], final_regular):
-            total_hits += 1
-
-    for student in critical:
-        if verify_student_in_list(student[0], final_critical):
-            total_hits += 1
-
-    
-    print(f"Total de acertos: {total_hits} de {total}")
-    print(f"Porcentagem de acertos: {total_hits / (total) * 100}%")
 
 
