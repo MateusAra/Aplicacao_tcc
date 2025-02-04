@@ -227,23 +227,9 @@ if __name__ == "__main__":
         "Identificador_usuario": [line[6] for line in list_of_recommended]
     })
 
-    palette = {
-        1: 'green',
-        2: 'blue',
-        3: 'orange',
-        4: 'red',
-        5: 'purple',
-        6: 'brown',
-        7: 'pink',
-        8: 'gray',
-        9: 'black',
-        10: 'yellow',
-    }
-
-
     #Relaciona as notas dos alunos com a quantidade de tentativas realizadas, separado por categoria.
     pl.figure(figsize=(8, 6))
-    sb.scatterplot(x='Nota', y='Tentativas', data=df_all, palette=palette, hue='Categoria')
+    sb.scatterplot(x='Nota', y='Tentativas', data=df_all, hue='Categoria')
 
     pl.title('Relação entre Nota vs Tentativas', fontsize=16)
     pl.xlabel('Nota', fontsize=12)
@@ -253,18 +239,18 @@ if __name__ == "__main__":
     pl.show()
 
     #Visão geral do desempenho dos alunos, destacando as áreas com mais estudantes.
-    sb.pairplot(df_all, hue='Categoria', palette=palette).savefig("Categorias_Geral.png")
+    sb.pairplot(df_all, hue='Categoria').savefig("Categorias_Geral.png")
     pl.show()
 
     #Visão geral dos conteudos a recomendar.
-    sb.pairplot(df_contents, hue='Secao', palette=palette).savefig("Conteudos.png")
+    sb.pairplot(df_contents, hue='Secao').savefig("Conteudos.png")
     pl.show()
 
     #Relaciona as notas dos alunos com o tempo gasto nas atividades, separado por categoria. 
     #Isso ajuda a entender como a quantidade de tempo investido influencia o 
     #desempenho dos alunos em diferentes categorias.
     pl.figure(figsize=(8, 6))
-    sb.scatterplot(x='Nota', y='Tempo', data=df_all, palette=palette, hue='Categoria')
+    sb.scatterplot(x='Nota', y='Tempo', data=df_all, hue='Categoria')
 
     pl.title('Relação entre Nota vs Tempo', fontsize=16)
     pl.xlabel('Nota', fontsize=12)
